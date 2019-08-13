@@ -164,7 +164,6 @@ pub fn wasi_fd_filestat_set_size(
     unsafe { libc::__wasi_fd_filestat_set_size(fd, st_size) }
 }
 
-
 pub fn wasi_fd_filestat_set_times(
     fd: libc::__wasi_fd_t,
     st_atim: libc::__wasi_timestamp_t,
@@ -206,4 +205,22 @@ pub fn wasi_fd_pwrite(
     nwritten: &mut usize,
 ) -> libc::__wasi_errno_t {
     unsafe { libc::__wasi_fd_pwrite(fd, iovs.as_ptr(), iovs.len(), offset, nwritten) }
+}
+
+pub fn wasi_fd_readdir(
+    fd: libc::__wasi_fd_t,
+    buf: &mut [u8],
+    buf_len: usize,
+    cookie: libc::__wasi_dircookie_t,
+    buf_used: &mut usize,
+) -> libc::__wasi_errno_t {
+    unsafe {
+        libc::__wasi_fd_readdir(
+            fd,
+            buf.as_mut_ptr() as *mut libc::c_void,
+            buf_len,
+            cookie,
+            buf_used,
+        )
+    }
 }
