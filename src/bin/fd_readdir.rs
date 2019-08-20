@@ -35,15 +35,13 @@ impl<'a> Iterator for ReadDir<'a> {
             let dirent_ptr = self.buf.as_ptr() as *const libc::__wasi_dirent_t;
             let dirent = *dirent_ptr;
             let name_ptr = dirent_ptr.offset(1) as *const u8;
-            // Linux syscall returns a NULL-terminated name, but WASI doesn't
+            // NOTE Linux syscall returns a NULL-terminated name, but WASI doesn't
             let namelen = dirent.d_namlen as usize;
             let slice = slice::from_raw_parts(name_ptr, namelen);
             let name = str::from_utf8(slice).unwrap().to_owned();
 
             // Update the internal state
             let delta = mem::size_of_val(&dirent) + namelen;
-            println!("{}", delta);
-
             self.buf = &self.buf[delta..];
 
             DirEntry { dirent, name }.into()
@@ -60,23 +58,18 @@ fn test_fd_readdir(dir_fd: libc::__wasi_fd_t) {
 
     let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) } ;
     let mut dirs = ReadDir::from_slice(sl);
-    for x in dirs {
-        println!("{}", x.name);
-    }
-    println!("===============================c=<><><>><>><>==========");
-    assert!(false);
 
-    // // the first entry should be `.`
-    // let dir = dirs.next().unwrap();
-    // assert_eq!(dir.name, ".", "first name");
-    // assert_eq!(dir.dirent.d_type, libc::__WASI_FILETYPE_REGULAR_FILE, "first type"); // WHY??
+    // the first entry should be `.`
+    let dir = dirs.next().unwrap();
+    assert_eq!(dir.name, ".", "first name");
+    assert_eq!(dir.dirent.d_type, libc::__WASI_FILETYPE_REGULAR_FILE, "first type"); // WHY??
 
-    // // the second entry should be `..`
-    // let dir = dirs.next().unwrap();
-    // assert_eq!(dir.name, "..", "second name");
-    // assert_eq!(dir.dirent.d_type, libc::__WASI_FILETYPE_REGULAR_FILE, "second type"); // WHY??
+    // the second entry should be `..`
+    let dir = dirs.next().unwrap();
+    assert_eq!(dir.name, "..", "second name");
+    assert_eq!(dir.dirent.d_type, libc::__WASI_FILETYPE_REGULAR_FILE, "second type"); // WHY??
 
-    // assert!(dirs.next().is_none(), "the directory should be seen as empty");
+    assert!(dirs.next().is_none(), "the directory should be seen as empty");
 }
 fn main() {
     let mut args = env::args();
